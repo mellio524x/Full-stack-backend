@@ -6,6 +6,9 @@ import os
 from dotenv import load_dotenv
 import uuid
 from datetime import datetime
+import certifi
+import os
+
 
 # Load environment variables
 load_dotenv()
@@ -24,14 +27,19 @@ app.add_middleware(
 # MongoDB connection
 try:
     mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
-    client = MongoClient(mongo_url)
+    
+    # If you're connecting to Atlas, you must use certifi
+    if "mongodb+srv" in mongo_url:
+        client = MongoClient(mongo_url, tlsCAFile=certifi.where())
+    else:
+        client = MongoClient(mongo_url)  # For localhost or self-hosted Mongo
+
     db_name = os.environ.get('DB_NAME', 'dev404_music')
     db = client[db_name]
     emails_collection = db.emails
     print(f"Connected to MongoDB: {mongo_url}")
 except Exception as e:
     print(f"Failed to connect to MongoDB: {e}")
-
 # Pydantic models
 class EmailSignup(BaseModel):
     email: EmailStr
